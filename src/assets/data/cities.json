@@ -1,0 +1,58 @@
+[
+  {
+    "city": "Hà Nội",
+    "population": "8,175,133",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Hanoi_skyline.jpg/240px-Hanoi_skyline.jpg",
+    "latitude": 21.0285,
+    "longitude": 105.8542
+  },
+  {
+    "city": "Hồ Chí Minh",
+    "population": "3,792,621",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/57/LA_Skyline_Mountains2.jpg/240px-LA_Skyline_Mountains2.jpg",
+    "latitude": 10.7769,
+    "longitude": 106.7009
+  },
+  {
+    "city": "Đà Nẵng",
+    "population": "2,695,598",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/85/2008-06-10_3000x1000_chicago_skyline.jpg/240px-2008-06-10_3000x1000_chicago_skyline.jpg",
+    "latitude": 16.0544,
+    "longitude": 108.2022
+  },
+  {
+    "city": "Hải Phòng",
+    "population": "2,100,263",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/60/Aerial_views_of_the_Houston%2C_Texas%2C_28005u.jpg/240px-Aerial_views_of_the_Houston%2C_Texas%2C_28005u.jpg",
+    "latitude": 20.8449,
+    "longitude": 106.6881
+  },
+  {
+    "city": "Cần Thơ",
+    "population": "1,445,632",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Downtown_Phoenix_Aerial_Looking_Northeast.jpg/207px-Downtown_Phoenix_Aerial_Looking_Northeast.jpg",
+    "latitude": 10.7769,
+    "longitude": 105.0807
+  },
+  {
+    "city": "Biên Hòa",
+    "population": "1,526,006",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/Philly_skyline.jpg/240px-Philly_skyline.jpg",
+    "latitude": 10.9447,
+    "longitude": 106.8243
+  },
+  {
+    "city": "Huế",
+    "population": "1,327,407",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/ff/Downtown_San_Antonio_View.JPG/240px-Downtown_San_Antonio_View.JPG",
+    "latitude": 16.4637,
+    "longitude": 107.5909
+  },
+  {
+    "city": "Nha Trang",
+    "population": "1,307,402",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/US_Navy_110604-N-NS602-574_Navy_and_Marine_Corps_personnel%2C_along_with_community_leaders_from_the_greater_San_Diego_area_come_together_to_commemora.jpg/240px-US_Navy_110604-N-NS602-574_Navy_and_Marine_Corps_personnel%2C_along_with_community_leaders_from_the_greater_San_Diego_area_come_together_to_commemora.jpg",
+    "latitude": 12.2388,
+    "longitude": 109.1966
+  }
+]
