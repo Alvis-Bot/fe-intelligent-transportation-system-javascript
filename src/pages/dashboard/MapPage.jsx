@@ -15,6 +15,8 @@ import {GeolocateControl, FullscreenControl, NavigationControl, Popup} from '@go
 
 import CITIES from '../../assets/data/cities.json';
 import CameraInfo from "../../components/CameraInfo.jsx";
+import { useEffect } from 'react';
+import AxiosClient from '../../services/AxiosClient.js';
 
 
 const geolocateStyle = {
@@ -43,9 +45,7 @@ function MapPage() {
     const [popupInfo, setPopupInfo] = useState(null);
 
     const [changeMenu, setChangeMenu] = useState('camera');
-    console.log(changeMenu);
-
-
+    const [dataCameras, setDataCameras] = useState([]);
     const renderMenu = (state) => {
         switch (state) {
             case 'camera':
@@ -68,7 +68,13 @@ function MapPage() {
                 break;
         }
     }
-    console.log('direction', direction);
+useEffect(() => {
+        const fetchData = async () => {
+            const response = await AxiosClient.get('/camera');
+            setDataCameras(response.data);
+        }
+        fetchData();
+    }, [])
 
     return (<>
 

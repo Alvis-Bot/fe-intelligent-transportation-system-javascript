@@ -6,9 +6,9 @@ const SIZE = 24;
 // Important for perf: the markers never change, avoid rerender when the map viewport changes
 function Pins(props) {
     const {data, onClick} = props;
-
+    console.log(data)
     return data.map((city, index) => (
-        <Marker key={`marker-${index}`} longitude={city.longitude} latitude={city.latitude}>
+        <Marker key={`marker-${index}`} longitude={city.location.longitude} latitude={city.location.latitude}>
             <img
 
                 src={ICON}
