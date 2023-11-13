@@ -15,6 +15,7 @@ const AntMapSider = ({ setChangeMenu }) => {
     const handleMenuClick = (e) => {
         switch (e.key) {
             case 'map':
+                setChangeMenu('camera');
                 navigate('/map');
                 break;
             case 'direction':

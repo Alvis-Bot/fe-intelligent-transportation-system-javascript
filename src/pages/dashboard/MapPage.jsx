@@ -11,14 +11,11 @@ import Pins from "../../components/Pin.jsx";
 
 const ACCESS_TOKEN = 'eFzBsrBRpWlI8QY3XULInuOePLflHjV2ayqMhrcW';
 const API_KEY = 'XAxNgR1hcRtwNuexftMPvKdaKmLFrqdhlgMOM4FN';
-import { GeolocateControl ,FullscreenControl , NavigationControl} from '@goongmaps/goong-map-react';
+import {GeolocateControl, FullscreenControl, NavigationControl , Popup} from '@goongmaps/goong-map-react';
 
 import CITIES from '../../assets/data/cities.json';
-const layerStyle = {
-    id: 'point', type: 'circle', paint: {
-        'circle-radius': 10, 'circle-color': '#007cbf'
-    }
-};
+import CameraInfo from "../../components/CameraInfo.jsx";
+
 
 const geolocateStyle = {
     top: 0, left: 0, padding: '10px'
@@ -32,16 +29,15 @@ const navStyle = {
     top: 72, left: 0, padding: '10px'
 };
 
-const scaleControlStyle = {
-    bottom: 36, left: 0, padding: '10px'
-};
 
 function MapPage() {
+
+
     const [viewport, setViewport] = useState({
         latitude: 21.027763, longitude: 105.834160, zoom: 10
     });
 
-
+    const [checkedList, setCheckedList] = useState([]);
 
     const [popupInfo, setPopupInfo] = useState(null);
 
@@ -53,11 +49,15 @@ function MapPage() {
         switch (state) {
             case 'camera':
                 return <FilterNavigation
+                    checkedList={checkedList}
+                    setCheckedList={setCheckedList}
                     setViewport={setViewport}
                     viewport={viewport}
                 />
             case 'direction':
                 return <DirectionNavigation
+                    setViewport={setViewport}
+                    viewport={viewport}
                 />
             case 'traffic':
                 return <div>Tình trạng giao thông</div>
@@ -65,6 +65,7 @@ function MapPage() {
                 break;
         }
     }
+    console.log('checkedList', checkedList.includes('camera'));
 
     return (<>
 
@@ -89,11 +90,32 @@ function MapPage() {
                 {...viewport}
                 onViewportChange={setViewport}
             >
-                <Pins data={CITIES} onClick={setPopupInfo} />
+
+                {/*
+                       Nếu checkedList chứa 'camera' thì mới hiển thị
+                */}
+                {
+                    checkedList.includes('camera') && (
+                        <Pins data={CITIES} onClick={setPopupInfo}/>
+                    )
+                }
+
+                { popupInfo  && (
+                    <Popup
+                        tipSize={5}
+                        anchor="top"
+                        longitude={popupInfo.longitude}
+                        latitude={popupInfo.latitude}
+                        closeOnClick={false}
+                        onClose={setPopupInfo}
+                    >
+                        <CameraInfo info={popupInfo}/>
+                    </Popup>
+                )}
                 <GeolocateControl style={geolocateStyle}/>
                 <FullscreenControl style={fullscreenControlStyle}/>
-                    <NavigationControl style={navStyle}/>
-                         {/*<ScaleControl style={scaleControlStyle} />*/}
+                <NavigationControl style={navStyle}/>
+                {/*<ScaleControl style={scaleControlStyle} />*/}
             </ReactMapGL>
         </Content>
 
@@ -130,9 +152,9 @@ const searchResult = async (query) => {
         ),
     }));
 }
-const defaultCheckedList = ['Apple', 'Orange'];
-const FilterNavigation = ({ setViewport , viewport }) => {
-    const [checkedList, setCheckedList] = useState(defaultCheckedList);
+
+const FilterNavigation = ({setViewport, viewport , setCheckedList , checkedList}) => {
+
     const onChange = (list) => {
         setCheckedList(list);
     };
@@ -213,8 +235,7 @@ const FilterNavigation = ({ setViewport , viewport }) => {
                             prefix={<SearchOutlined style={{color: '#8c8c8c'}}/>} bordered={false}/>
                     </AutoComplete>
                     <Button
-                        style={{
-                        }}
+                        style={{}}
                         type={'dashed'}
                     >
                         <EyeOutlined/>
@@ -284,126 +305,19 @@ const FilterNavigation = ({ setViewport , viewport }) => {
                                         title={
                                             <Typography
                                                 style={{
-                                                    color: "#007cbf",
                                                     fontWeight: "bold",
                                                     fontSize: "14px",
                                                     lineHeight: "43px",
                                                 }}
-                                            >Tình trạng giao thông</Typography>
+                                            >
+                                                Camera
+                                            </Typography>
                                         }
                                     />
-                                    <Checkbox checked={true} value="A"></Checkbox>
+                                    <Checkbox  value="camera"></Checkbox>
                                 </Space>
                             </Card>
 
-                        </Col>
-                        <Col span={24}>
-                            <Card
-                                style={{
-                                    width: "100%",
-                                    border: "none",
-                                    borderRadius: "8px", // Example border radius
-                                    boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)", // Example box shadow
-                                }}
-                            >
-                                <Space direction="horizontal" style={{
-                                    width: "100%",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "space-between",
-                                }}>
-                                    <Meta
-                                        style={{
-                                            color: "#007cbf",
-                                            textTransform: "capitalize",
-                                            fontWeight: "bold",
-                                        }}
-                                        avatar={<div
-                                            style={{
-                                                width: "40px",
-                                                height: "40px",
-                                                borderRadius: "50%",
-                                                backgroundColor: "#007cbf",
-                                                display: "flex",
-                                                alignItems: "center",
-                                                justifyContent: "center",
-                                            }}
-                                        >
-                                            <ArrowUpOutlined
-                                                style={{
-                                                    color: "white",
-                                                    fontSize: "14px",
-                                                }}
-                                            />
-                                        </div>}
-                                        title={
-                                            <Typography
-                                                style={{
-                                                    color: "#007cbf",
-                                                    fontWeight: "bold",
-                                                    fontSize: "14px",
-                                                    lineHeight: "43px",
-                                                }}
-                                            >Tình trạng giao thông</Typography>
-                                        }
-                                    />
-                                    <Checkbox checked={true} value="A"></Checkbox>
-                                </Space>
-                            </Card>
-                        </Col>
-                        <Col span={24}>
-                            <Card
-                                style={{
-                                    width: "100%",
-                                    border: "none",
-                                    borderRadius: "8px", // Example border radius
-                                    boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)", // Example box shadow
-                                }}
-                            >
-                                <Space direction="horizontal" style={{
-                                    width: "100%",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "space-between",
-                                }}>
-                                    <Meta
-                                        style={{
-                                            color: "#007cbf",
-                                            textTransform: "capitalize",
-                                            fontWeight: "bold",
-                                        }}
-                                        avatar={<div
-                                            style={{
-                                                width: "40px",
-                                                height: "40px",
-                                                borderRadius: "50%",
-                                                backgroundColor: "#007cbf",
-                                                display: "flex",
-                                                alignItems: "center",
-                                                justifyContent: "center",
-                                            }}
-                                        >
-                                            <ArrowUpOutlined
-                                                style={{
-                                                    color: "white",
-                                                    fontSize: "14px",
-                                                }}
-                                            />
-                                        </div>}
-                                        title={
-                                            <Typography
-                                                style={{
-                                                    color: "#007cbf",
-                                                    fontWeight: "bold",
-                                                    fontSize: "14px",
-                                                    lineHeight: "43px",
-                                                }}
-                                            >Tình trạng giao thông</Typography>
-                                        }
-                                    />
-                                    <Checkbox checked={true} value="A"></Checkbox>
-                                </Space>
-                            </Card>
                         </Col>
                     </Row>
                 </Checkbox.Group>
@@ -415,8 +329,10 @@ const FilterNavigation = ({ setViewport , viewport }) => {
 FilterNavigation.propTypes = {
     setViewport: PropTypes.func.isRequired,
     viewport: PropTypes.object.isRequired,
+    setCheckedList: PropTypes.func.isRequired,
+    checkedList: PropTypes.array.isRequired,
 };
-const DirectionNavigation = () => {
+const DirectionNavigation = ({setViewport, viewport}) => {
 
     return (<div
         style={{
@@ -484,6 +400,11 @@ const DirectionNavigation = () => {
     </div>)
 
 }
+
+DirectionNavigation.propTypes = {
+    setViewport: PropTypes.func.isRequired,
+    viewport: PropTypes.object.isRequired,
+};
 
 
 //
