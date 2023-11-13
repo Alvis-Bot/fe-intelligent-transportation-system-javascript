@@ -7,11 +7,13 @@ import AntMapSider from "../../components/AntMapSider.jsx";
 import {ArrowDownOutlined, ArrowUpOutlined, CameraOutlined, EyeOutlined, SearchOutlined} from "@ant-design/icons";
 import Meta from "antd/es/card/Meta.js";
 import PropTypes from "prop-types";
+import Pins from "../../components/Pin.jsx";
 
 const ACCESS_TOKEN = 'eFzBsrBRpWlI8QY3XULInuOePLflHjV2ayqMhrcW';
 const API_KEY = 'XAxNgR1hcRtwNuexftMPvKdaKmLFrqdhlgMOM4FN';
+import { GeolocateControl ,FullscreenControl , NavigationControl} from '@goongmaps/goong-map-react';
 
-
+import CITIES from '../../assets/data/cities.json';
 const layerStyle = {
     id: 'point', type: 'circle', paint: {
         'circle-radius': 10, 'circle-color': '#007cbf'
@@ -87,6 +89,11 @@ function MapPage() {
                 {...viewport}
                 onViewportChange={setViewport}
             >
+                <Pins data={CITIES} onClick={setPopupInfo} />
+                <GeolocateControl style={geolocateStyle}/>
+                <FullscreenControl style={fullscreenControlStyle}/>
+                    <NavigationControl style={navStyle}/>
+                         {/*<ScaleControl style={scaleControlStyle} />*/}
             </ReactMapGL>
         </Content>
 
