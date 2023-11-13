@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import ReactMapGL from '@goongmaps/goong-map-react';
+import ReactMapGL, {Layer, Source} from '@goongmaps/goong-map-react';
 import {AutoComplete, Button, Card, Checkbox, Col, Form, Input, message, Row, Space, Typography} from 'antd';
 import polyline from "@mapbox/polyline";
 import {Content} from "antd/es/layout/layout.js";
@@ -11,7 +11,7 @@ import Pins from "../../components/Pin.jsx";
 
 const ACCESS_TOKEN = 'eFzBsrBRpWlI8QY3XULInuOePLflHjV2ayqMhrcW';
 const API_KEY = 'XAxNgR1hcRtwNuexftMPvKdaKmLFrqdhlgMOM4FN';
-import {GeolocateControl, FullscreenControl, NavigationControl , Popup} from '@goongmaps/goong-map-react';
+import {GeolocateControl, FullscreenControl, NavigationControl, Popup} from '@goongmaps/goong-map-react';
 
 import CITIES from '../../assets/data/cities.json';
 import CameraInfo from "../../components/CameraInfo.jsx";
@@ -37,6 +37,7 @@ function MapPage() {
         latitude: 21.027763, longitude: 105.834160, zoom: 10
     });
 
+    const [direction, setDirection] = useState(null);
     const [checkedList, setCheckedList] = useState([]);
 
     const [popupInfo, setPopupInfo] = useState(null);
@@ -56,6 +57,8 @@ function MapPage() {
                 />
             case 'direction':
                 return <DirectionNavigation
+                    direction={direction}
+                    setDirection={setDirection}
                     setViewport={setViewport}
                     viewport={viewport}
                 />
@@ -65,7 +68,7 @@ function MapPage() {
                 break;
         }
     }
-    console.log('checkedList', checkedList.includes('camera'));
+    console.log('direction', direction);
 
     return (<>
 
@@ -77,9 +80,7 @@ function MapPage() {
         >
 
             <AntMapSider setChangeMenu={setChangeMenu}/>
-            {
-                renderMenu(changeMenu)
-            }
+            {renderMenu(changeMenu)}
 
             <ReactMapGL
                 width="100%"
@@ -94,23 +95,35 @@ function MapPage() {
                 {/*
                        Nếu checkedList chứa 'camera' thì mới hiển thị
                 */}
-                {
-                    checkedList.includes('camera') && (
-                        <Pins data={CITIES} onClick={setPopupInfo}/>
-                    )
-                }
+                {checkedList.includes('camera') && (<Pins data={CITIES} onClick={setPopupInfo}/>)}
 
-                { popupInfo  && (
-                    <Popup
-                        tipSize={5}
-                        anchor="top"
-                        longitude={popupInfo.longitude}
-                        latitude={popupInfo.latitude}
-                        closeOnClick={false}
-                        onClose={setPopupInfo}
-                    >
-                        <CameraInfo info={popupInfo}/>
-                    </Popup>
+                {popupInfo && (<Popup
+                    tipSize={5}
+                    anchor="top"
+                    longitude={popupInfo.longitude}
+                    latitude={popupInfo.latitude}
+                    closeOnClick={false}
+                    onClose={setPopupInfo}
+                >
+                    <CameraInfo info={popupInfo}/>
+                </Popup>)}
+
+                {direction && (
+                    <Source type={'geojson'} data={direction}>
+                        <Layer
+                            id="route"
+                            type="line"
+                            layout={{
+                                'line-join': 'round',
+                                'line-cap': 'round'
+
+                            }}
+                            paint={{
+                                'line-color': '#1e88e5',
+                                'line-width': 8
+                            }}
+                        />
+                    </Source>
                 )}
                 <GeolocateControl style={geolocateStyle}/>
                 <FullscreenControl style={fullscreenControlStyle}/>
@@ -119,7 +132,8 @@ function MapPage() {
             </ReactMapGL>
         </Content>
 
-    </>);
+    </>)
+        ;
 }
 
 export default MapPage;
@@ -129,31 +143,22 @@ const searchResult = async (query) => {
     const data = await response.json();
 
     const result = data.predictions.map((prediction) => ({
-        value: prediction.description,
-        place_id: prediction.place_id
+        value: prediction.description, place_id: prediction.place_id
     }));
     console.log(result);
 
     return result.map(({value, place_id}) => ({
-        value: value,
-        place_id: place_id,
-        label: (
-            <div
-                style={{
-                    display: 'flex',
-                    width: '100%',
-                    height: '45px',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                }}
-            >
-                {value}
-            </div>
-        ),
+        value: value, place_id: place_id, label: (<div
+            style={{
+                display: 'flex', width: '100%', height: '45px', alignItems: 'center', justifyContent: 'space-between',
+            }}
+        >
+            {value}
+        </div>),
     }));
 }
 
-const FilterNavigation = ({setViewport, viewport , setCheckedList , checkedList}) => {
+const FilterNavigation = ({setViewport, viewport, setCheckedList, checkedList}) => {
 
     const onChange = (list) => {
         setCheckedList(list);
@@ -194,8 +199,7 @@ const FilterNavigation = ({setViewport, viewport , setCheckedList , checkedList}
     >
         <Typography.Title
             style={{
-                margin: 0,
-                marginBottom: "26px", textTransform: "uppercase", fontWeight: "bold",
+                margin: 0, marginBottom: "26px", textTransform: "uppercase", fontWeight: "bold",
             }}
             level={5}>Bộ lọc</Typography.Title>
         <Form
@@ -205,50 +209,32 @@ const FilterNavigation = ({setViewport, viewport , setCheckedList , checkedList}
             <Form.Item
                 name="search"
             >
-                <div
+                <AutoComplete
                     style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        gap: "16px",
+                        width: "100%",
                     }}
+                    options={options}
+                    onSelect={(value, option) => onSelect(option.place_id)}
+                    onSearch={handleSearch}
+                    size="large"
                 >
-                    <AutoComplete
+                    <Input
+
                         style={{
-                            width: "100%",
+                            width: "100%", height: "50px",
+
+                            boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)", backgroundColor: "#f5f5f5",
                         }}
-                        options={options}
-                        onSelect={(value, option) => onSelect(option.place_id)}
-                        onSearch={handleSearch}
-                        size="large"
-                    >
-                        <Input
-
-                            style={{
-                                width: "100%",
-                                height: "40px",
-
-                                boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
-                                backgroundColor: "#f5f5f5",
-                            }}
-                            placeholder="Search"
-                            prefix={<SearchOutlined style={{color: '#8c8c8c'}}/>} bordered={false}/>
-                    </AutoComplete>
-                    <Button
-                        style={{}}
-                        type={'dashed'}
-                    >
-                        <EyeOutlined/>
-                    </Button>
-                </div>
+                        placeholder="Search"
+                        prefix={<SearchOutlined style={{color: '#8c8c8c'}}/>} bordered={false}/>
+                </AutoComplete>
             </Form.Item>
 
 
             <Typography.Text
                 style={{
                     // xám
-                    color: "#8c8c8c",
-                    textTransform: "capitalize",
+                    color: "#8c8c8c", textTransform: "capitalize",
                 }}
             >Type of Place</Typography.Text>
 
@@ -258,17 +244,14 @@ const FilterNavigation = ({setViewport, viewport , setCheckedList , checkedList}
                 <Checkbox.Group style={{width: '100%'}} onChange={onChange} value={checkedList}>
                     <Row
                         style={{
-                            marginTop: "12px",
-                            width: "100%",
+                            marginTop: "12px", width: "100%",
                         }}
                         gutter={[16, 16]}
                     >
                         <Col span={24}>
                             <Card
                                 style={{
-                                    width: "100%",
-                                    border: "none",
-                                    borderRadius: "8px", // Example border radius
+                                    width: "100%", border: "none", borderRadius: "8px", // Example border radius
                                     boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)", // Example box shadow
                                 }}
                             >
@@ -280,9 +263,7 @@ const FilterNavigation = ({setViewport, viewport , setCheckedList , checkedList}
                                 }}>
                                     <Meta
                                         style={{
-                                            color: "#007cbf",
-                                            textTransform: "capitalize",
-                                            fontWeight: "bold",
+                                            color: "#007cbf", textTransform: "capitalize", fontWeight: "bold",
                                         }}
                                         avatar={<div
                                             style={{
@@ -297,24 +278,19 @@ const FilterNavigation = ({setViewport, viewport , setCheckedList , checkedList}
                                         >
                                             <ArrowUpOutlined
                                                 style={{
-                                                    color: "white",
-                                                    fontSize: "14px",
+                                                    color: "white", fontSize: "14px",
                                                 }}
                                             />
                                         </div>}
-                                        title={
-                                            <Typography
-                                                style={{
-                                                    fontWeight: "bold",
-                                                    fontSize: "14px",
-                                                    lineHeight: "43px",
-                                                }}
-                                            >
-                                                Camera
-                                            </Typography>
-                                        }
+                                        title={<Typography
+                                            style={{
+                                                fontWeight: "bold", fontSize: "14px", lineHeight: "43px",
+                                            }}
+                                        >
+                                            Camera
+                                        </Typography>}
                                     />
-                                    <Checkbox  value="camera"></Checkbox>
+                                    <Checkbox value="camera"></Checkbox>
                                 </Space>
                             </Card>
 
@@ -332,7 +308,86 @@ FilterNavigation.propTypes = {
     setCheckedList: PropTypes.func.isRequired,
     checkedList: PropTypes.array.isRequired,
 };
-const DirectionNavigation = ({setViewport, viewport}) => {
+const DirectionNavigation = ({setViewport, viewport, direction, setDirection}) => {
+
+    const [optionsStart, setOptionsStart] = useState([]);
+    const [optionsEnd, setOptionsEnd] = useState([]);
+
+    const [latLngStart, setLatLngStart] = useState([]);
+    const [latLngEnd, setLatLngEnd] = useState([]);
+
+    const handleSearchStart = async (value) => {
+        setOptionsStart(value ? await searchResult(value) : []);
+    }
+
+    const handleSearchEnd = async (value) => {
+        setOptionsEnd(value ? await searchResult(value) : []);
+    }
+
+
+    const handleStartSelect = (place_id) => {
+        console.log(place_id);
+
+        if (!place_id) {
+            return;
+        }
+
+        fetch(`https://rsapi.goong.io/Place/Detail?api_key=${API_KEY}&place_id=${place_id}`)
+            .then((response) => response.json())
+            .then((data) => {
+                const {lat, lng} = data.result.geometry.location;
+                //20.981971,105.864323
+                setLatLngStart(`${lat},${lng}`);
+                setViewport({
+                    ...viewport, latitude: lat, longitude: lng, zoom: 14
+                });
+            })
+            .catch((error) => {
+                console.error(error);
+                message.error('Error fetching places.');
+            });
+    }
+
+
+    const handleEndSelect = (place_id) => {
+        console.log(place_id);
+
+        if (!place_id) {
+            return;
+        }
+
+        fetch(`https://rsapi.goong.io/Place/Detail?api_key=${API_KEY}&place_id=${place_id}`)
+            .then((response) => response.json())
+            .then((data) => {
+                const {lat, lng} = data.result.geometry.location;
+                //20.981971,105.864323
+                setLatLngEnd(`${lat},${lng}`);
+                setViewport({
+                    ...viewport, latitude: lat, longitude: lng, zoom: 14
+                });
+            })
+            .catch((error) => {
+                console.error(error);
+                message.error('Error fetching places.');
+            });
+    }
+
+    const getDirection = async () => {
+
+        if (!latLngStart || !latLngEnd) {
+            return;
+        }
+
+        const response = await fetch(`https://rsapi.goong.io/Direction?api_key=${API_KEY}&origin=${latLngStart}&destination=${latLngEnd}`);
+        const data = await response.json();
+        const route = data.routes[0];
+
+        const geometry_string = route.overview_polyline.points;
+        const geoJSON = polyline.toGeoJSON(geometry_string);
+        console.log(geoJSON);
+        setDirection(geoJSON);
+    }
+
 
     return (<div
         style={{
@@ -341,8 +396,7 @@ const DirectionNavigation = ({setViewport, viewport}) => {
     >
         <Typography.Title
             style={{
-                margin: 0,
-                marginBottom: "26px", textTransform: "uppercase", fontWeight: "bold",
+                margin: 0, marginBottom: "26px", textTransform: "uppercase", fontWeight: "bold",
             }}
             level={5}>Chỉ đường</Typography.Title>
 
@@ -353,11 +407,17 @@ const DirectionNavigation = ({setViewport, viewport}) => {
             layout="vertical"
         >
             <Form.Item
-                name="search"
+                name="start"
             >
-                <Space direction="horizontal"
-                       align={"center"}
-                       style={{width: "100%"}}>
+                <AutoComplete
+                    style={{
+                        width: "100%",
+                    }}
+                    options={optionsStart}
+                    onSelect={(value, option) => handleStartSelect(option.place_id)}
+                    onSearch={handleSearchStart}
+                    size="large"
+                >
                     <Input
 
                         placeholder="Vị trí bắt đầu"
@@ -367,34 +427,41 @@ const DirectionNavigation = ({setViewport, viewport}) => {
                         }}
 
                     />
-                    <Button style={{
-                        backgroundColor: "#007cbf",
-                        color: "white",
-                    }}>
-                        <CameraOutlined/>
+                </AutoComplete>
+            </Form.Item>
 
-                    </Button>
-                </Space>
-                <Space direction="horizontal"
-                       align={"center"}
-                       style={{width: "100%"}}>
+            <Form.Item
+                name="end"
+            >
+
+                <AutoComplete
+                    style={{
+                        width: "100%",
+                    }}
+                    options={optionsEnd}
+                    onSelect={(value, option) => handleEndSelect(option.place_id)}
+                    onSearch={handleSearchEnd}
+                    size="large"
+                >
                     <Input
 
-                        placeholder="Vị trí bắt đầu"
-                        prefix={<ArrowDownOutlined/>}
+                        placeholder="Vị trí kết thúc"
+                        prefix={<ArrowUpOutlined/>}
                         style={{
                             width: "100%",
                         }}
-
                     />
-                    <Button style={{
-                        backgroundColor: "#007cbf",
-                        color: "white",
-                    }}>
-                        <CameraOutlined/>
-
-                    </Button>
-                </Space>
+                </AutoComplete>
+            </Form.Item>
+            <Form.Item>
+                <Button
+                    style={{
+                        width: "100%",
+                    }}
+                    type="primary"
+                    size={`large`}
+                    onClick={getDirection}
+                >Tìm đường</Button>
             </Form.Item>
         </Form>
     </div>)
@@ -402,8 +469,8 @@ const DirectionNavigation = ({setViewport, viewport}) => {
 }
 
 DirectionNavigation.propTypes = {
-    setViewport: PropTypes.func.isRequired,
-    viewport: PropTypes.object.isRequired,
+    setViewport: PropTypes.func.isRequired, viewport: PropTypes.object.isRequired,
+    setDirection: PropTypes.func.isRequired, direction: PropTypes.object.isRequired,
 };
 
 
