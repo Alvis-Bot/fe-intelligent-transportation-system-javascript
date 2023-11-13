@@ -15,12 +15,10 @@ const AntMapSider = ({ setChangeMenu }) => {
     const handleMenuClick = (e) => {
         switch (e.key) {
             case 'map':
-                setChangeMenu('camera');
-                navigate('/map');
+                setChangeMenu('map');
                 break;
             case 'direction':
                 setChangeMenu('direction');
-                navigate('/map');
                 break;
             default:
                 break;
@@ -31,14 +29,11 @@ const AntMapSider = ({ setChangeMenu }) => {
     const getDefaultSelectedKeys = (pathname) => {
         const pathParts = pathname.split('/');
         const firstPathSegment = pathParts[1];
-
-        console.log(firstPathSegment);
-
         switch (firstPathSegment) {
             case 'map':
                 return ['map'];
             case 'direction':
-                return ['map'];
+                return ['direction'];
             default:
                 return [];
         }
@@ -70,11 +65,7 @@ const AntMapSider = ({ setChangeMenu }) => {
                         label: 'Chỉ đường',
                         className: 'menu-item-custom'
                     },
-                    // {
-                    //     key: '3',
-                    //     icon: <UploadOutlined />,
-                    //     label: 'nav 3',
-                    // },
+                
                 ]}
             />
         </Sider>

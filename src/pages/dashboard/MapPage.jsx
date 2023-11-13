@@ -15,6 +15,8 @@ import {GeolocateControl, FullscreenControl, NavigationControl , Popup} from '@g
 
 import CITIES from '../../assets/data/cities.json';
 import CameraInfo from "../../components/CameraInfo.jsx";
+import { useEffect } from 'react';
+import AxiosClient from '../../services/AxiosClient.js';
 
 
 const geolocateStyle = {
@@ -42,9 +44,7 @@ function MapPage() {
     const [popupInfo, setPopupInfo] = useState(null);
 
     const [changeMenu, setChangeMenu] = useState('camera');
-    console.log(changeMenu);
-
-
+    const [dataCameras, setDataCameras] = useState([]);
     const renderMenu = (state) => {
         switch (state) {
             case 'camera':
@@ -65,7 +65,14 @@ function MapPage() {
                 break;
         }
     }
-    console.log('checkedList', checkedList.includes('camera'));
+    
+    useEffect(() => {
+        const fetchData = async () => {
+            const response = await AxiosClient.get('/camera');
+            setDataCameras(response.data);
+        }
+        fetchData();
+    }, [])
 
     return (<>
 
@@ -96,7 +103,7 @@ function MapPage() {
                 */}
                 {
                     checkedList.includes('camera') && (
-                        <Pins data={CITIES} onClick={setPopupInfo}/>
+                        <Pins data={dataCameras} onClick={setPopupInfo}/>
                     )
                 }
 
@@ -104,8 +111,8 @@ function MapPage() {
                     <Popup
                         tipSize={5}
                         anchor="top"
-                        longitude={popupInfo.longitude}
-                        latitude={popupInfo.latitude}
+                        longitude={popupInfo.location.longitude}
+                        latitude={popupInfo.location.latitude}
                         closeOnClick={false}
                         onClose={setPopupInfo}
                     >
