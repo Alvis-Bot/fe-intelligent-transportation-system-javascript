@@ -3,7 +3,7 @@ import {Layout, Menu} from 'antd';
 import PropTypes from "prop-types";
 const {Sider} = Layout;
 import {useLocation, useNavigate} from "react-router-dom";
-import {InstagramLogo, Signpost} from "phosphor-react";
+import {InstagramLogo, Signpost,Warning} from "phosphor-react";
 
 
 const AntMapSider = ({ setChangeMenu }) => {
@@ -20,6 +20,9 @@ const AntMapSider = ({ setChangeMenu }) => {
             case 'direction':
                 setChangeMenu('direction');
                 break;
+            case 'alert':
+                setChangeMenu('alert');
+                break;
             default:
                 break;
         }
@@ -34,6 +37,8 @@ const AntMapSider = ({ setChangeMenu }) => {
                 return ['map'];
             case 'direction':
                 return ['direction'];
+            case 'alert':
+                return ['alert'];
             default:
                 return [];
         }
@@ -65,6 +70,12 @@ const AntMapSider = ({ setChangeMenu }) => {
                         label: 'Chỉ đường',
                         className: 'menu-item-custom'
                     },
+                    {
+                        key: 'alert',
+                        icon:<Warning size={24} />,
+                        label: 'Chỉ đường',
+                        className: 'menu-item-custom'
+                    }
                 
                 ]}
             />

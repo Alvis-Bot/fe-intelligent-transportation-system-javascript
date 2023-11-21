@@ -1,28 +1,23 @@
-import React, {useState} from 'react';
+import React, {useRef, useState} from 'react';
 import ReactMapGL, {Layer, Source} from '@goongmaps/goong-map-react';
-import {AutoComplete, Button, Card, Checkbox, Col, Form, Input, message, Row, Space, Typography} from 'antd';
+import {AutoComplete, Button, Card, Checkbox, Col, Form, Input, message, Row, Space, Typography,List} from 'antd';
 import polyline from "@mapbox/polyline";
 import {Content} from "antd/es/layout/layout.js";
 import AntMapSider from "../../components/AntMapSider.jsx";
-import {ArrowDownOutlined, ArrowUpOutlined, CameraOutlined, EyeOutlined, SearchOutlined} from "@ant-design/icons";
+import {AlertFilled, ArrowDownOutlined, ArrowUpOutlined, CameraOutlined, EyeOutlined, SearchOutlined} from "@ant-design/icons";
 import Meta from "antd/es/card/Meta.js";
 import PropTypes from "prop-types";
 import Pins from "../../components/Pin.jsx";
-
 const ACCESS_TOKEN = 'eFzBsrBRpWlI8QY3XULInuOePLflHjV2ayqMhrcW';
 const API_KEY = 'XAxNgR1hcRtwNuexftMPvKdaKmLFrqdhlgMOM4FN';
 import {GeolocateControl, FullscreenControl, NavigationControl, Popup} from '@goongmaps/goong-map-react';
-
-import CITIES from '../../assets/data/cities.json';
 import CameraInfo from "../../components/CameraInfo.jsx";
 import { useEffect } from 'react';
 import AxiosClient from '../../services/AxiosClient.js';
-
-
+import checkPointIcon from "../../assets/images/check.png";
 const geolocateStyle = {
     top: 0, left: 0, padding: '10px'
 };
-
 const fullscreenControlStyle = {
     top: 36, left: 0, padding: '10px'
 };
@@ -31,30 +26,71 @@ const navStyle = {
     top: 72, left: 0, padding: '10px'
 };
 
-
+const geojson = {
+    type: 'FeatureCollection',
+    features: [
+      {type: 'Feature', geometry: {type: 'Point', coordinates: [ 106.6965, 10.8414]}}
+    ]
+  };
+  
+  const layerStyle = {
+    id: 'point',
+    type: 'circle',
+    paint: {
+      'circle-radius': 10,
+      'circle-color': '#007cbf'
+    }
+  };
 function MapPage() {
 
 
     const [viewport, setViewport] = useState({
-        latitude: 21.027763, longitude: 105.834160, zoom: 10
+        latitude: 10.8414, longitude: 106.6965, zoom: 12, bearing: 0, pitch: 0
     });
 
     const [direction, setDirection] = useState(null);
     const [checkedList, setCheckedList] = useState([]);
-
+    const [checkPoint, setCheckPoint] = useState([]);
     const [popupInfo, setPopupInfo] = useState(null);
-
+    const [timkiemdiadiem, setTimkiemdiadiem] = useState(null);
+    const map = useRef(null);
     const [changeMenu, setChangeMenu] = useState('camera');
     const [dataCameras, setDataCameras] = useState([]);
-    const renderMenu = (state) => {
+    const addLayerImage = (location) => {
+        if(map)
+        {
+            const map2 = map.current.getMap()
+            map2.addImage("check",checkPointIcon)
+            map2.addSource("my-data", {
+                type: 'FeatureCollection',
+                features: [
+                  {type: 'Feature', geometry: {type: 'Point', coordinates: [ location.longitude, location.latitude]}}
+                ]
+              });
+            map2.addLayer({
+                id: 'point',
+                type: 'circle',
+                paint: {
+                  'circle-radius': 10,
+                  'circle-color': '#007cbf'
+                }
+            });
+
+        }
+    }
+    const RenderMenu = (props) => {
+        const {state} = props;
         switch (state) {
             case 'camera':
-                return <FilterNavigation
+                return (<FilterNavigation
                     checkedList={checkedList}
                     setCheckedList={setCheckedList}
                     setViewport={setViewport}
                     viewport={viewport}
-                />
+                    setCheckPoint={setCheckPoint}
+                    paintCheckPoint={addLayerImage}
+                    setTimkiemdiadiem={setTimkiemdiadiem}
+                    />)
             case 'direction':
                 return <DirectionNavigation
                     direction={direction}
@@ -62,13 +98,15 @@ function MapPage() {
                     setViewport={setViewport}
                     viewport={viewport}
                 />
+            case 'alert':
+                return <AlertDiv />
             case 'traffic':
                 return <div>Tình trạng giao thông</div>
             default:
                 break;
         }
     }
-useEffect(() => {
+    useEffect(() => {
         const fetchData = async () => {
             const response = await AxiosClient.get('/camera');
             setDataCameras(response.data);
@@ -76,6 +114,7 @@ useEffect(() => {
         fetchData();
     }, [])
 
+    
     return (<>
 
 
@@ -86,50 +125,93 @@ useEffect(() => {
         >
 
             <AntMapSider setChangeMenu={setChangeMenu}/>
-            {renderMenu(changeMenu)}
-
+            {
+                RenderMenu({state: changeMenu})
+            }
             <ReactMapGL
                 width="100%"
                 height="100%"
-
+                ref={map}
                 mapStyle="https://tiles.goong.io/assets/goong_map_web.json"
                 goongApiAccessToken={ACCESS_TOKEN}
                 {...viewport}
                 onViewportChange={setViewport}
             >
-
+                
                 {/*
                        Nếu checkedList chứa 'camera' thì mới hiển thị
                 */}
-                {checkedList.includes('camera') && (<Pins data={CITIES} onClick={setPopupInfo}/>)}
-
+                {checkedList.includes('camera') && (<Pins data={dataCameras} onClick={setPopupInfo}/>)}
+                {
+                    checkPoint.length > 0 &&
+                    (
+                        <Source id="my-data" type="geojson" data={{
+                            type: 'FeatureCollection',
+                            features: checkPoint
+                        }}>
+                            <Layer
+                                id="point"
+                                type="circle"
+                                paint= {
+                                    {
+                                        'circle-radius': 10,
+                                        'circle-color': '#007cbf'
+                                      }
+                                }
+                            />
+                        </Source>
+                    )
+                }
                 {popupInfo && (<Popup
                     tipSize={5}
                     anchor="top"
-                    longitude={popupInfo.longitude}
-                    latitude={popupInfo.latitude}
+                    longitude={popupInfo.location.longitude}
+                    latitude={popupInfo.location.latitude}
                     closeOnClick={false}
                     onClose={setPopupInfo}
                 >
                     <CameraInfo info={popupInfo}/>
                 </Popup>)}
 
-                {direction && (
-                    <Source type={'geojson'} data={direction}>
+                 {
+                    timkiemdiadiem && (<Source id="my-data" type="geojson" data={{
+                        type: 'FeatureCollection',
+                        features: timkiemdiadiem
+                    }}>
                         <Layer
-                            id="route"
-                            type="line"
-                            layout={{
-                                'line-join': 'round',
-                                'line-cap': 'round'
-
-                            }}
-                            paint={{
-                                'line-color': '#1e88e5',
-                                'line-width': 8
-                            }}
+                            id="point"
+                            type="circle"
+                            paint= {
+                                {
+                                    'circle-radius': 10,
+                                    'circle-color': '#007cbf'
+                                    
+                                }
+                            }
                         />
-                    </Source>
+                    </Source>)
+                 }   
+                {direction && (
+                    <div>
+                        <Source type={'geojson'} data={direction}>
+                            <Layer
+                                id="route"
+                                type="line"
+                                layout={{
+                                    'line-join': 'round',
+                                    'line-cap': 'round'
+                                }}
+                                paint={{
+                                    'line-color': '#1e88e5',
+                                    'line-width': 8
+                                }}
+                            />
+                        </Source>
+                        <Source type="geojson" data={geojson}>
+                            <Layer {...layerStyle} />
+                        </Source>
+                    </div>
+
                 )}
                 <GeolocateControl style={geolocateStyle}/>
                 <FullscreenControl style={fullscreenControlStyle}/>
@@ -151,7 +233,6 @@ const searchResult = async (query) => {
     const result = data.predictions.map((prediction) => ({
         value: prediction.description, place_id: prediction.place_id
     }));
-    console.log(result);
 
     return result.map(({value, place_id}) => ({
         value: value, place_id: place_id, label: (<div
@@ -164,7 +245,7 @@ const searchResult = async (query) => {
     }));
 }
 
-const FilterNavigation = ({setViewport, viewport, setCheckedList, checkedList}) => {
+const FilterNavigation = ({setViewport, viewport, setCheckedList, checkedList,setCheckPoint,setTimkiemdiadiem}) => {
 
     const onChange = (list) => {
         setCheckedList(list);
@@ -187,7 +268,19 @@ const FilterNavigation = ({setViewport, viewport, setCheckedList, checkedList}) 
             .then((response) => response.json())
             .then((data) => {
                 const {lat, lng} = data.result.geometry.location;
-                //20.981971,105.864323
+                setTimkiemdiadiem([
+                    {
+                        "type": "Feature",
+                        "properties": {},
+                        "geometry": {
+                          "coordinates": [
+                            lat,
+                            lng
+                          ],
+                          "type": "Point"
+                        }
+                      }
+                ])
                 setViewport({
                     ...viewport, latitude: lat, longitude: lng, zoom: 14
                 });
@@ -225,7 +318,6 @@ const FilterNavigation = ({setViewport, viewport, setCheckedList, checkedList}) 
                     size="large"
                 >
                     <Input
-
                         style={{
                             width: "100%", height: "50px",
 
@@ -308,12 +400,6 @@ const FilterNavigation = ({setViewport, viewport, setCheckedList, checkedList}) 
     </div>)
 }
 
-FilterNavigation.propTypes = {
-    setViewport: PropTypes.func.isRequired,
-    viewport: PropTypes.object.isRequired,
-    setCheckedList: PropTypes.func.isRequired,
-    checkedList: PropTypes.array.isRequired,
-};
 const DirectionNavigation = ({setViewport, viewport, direction, setDirection}) => {
 
     const [optionsStart, setOptionsStart] = useState([]);
@@ -356,8 +442,6 @@ const DirectionNavigation = ({setViewport, viewport, direction, setDirection}) =
 
 
     const handleEndSelect = (place_id) => {
-        console.log(place_id);
-
         if (!place_id) {
             return;
         }
@@ -390,7 +474,6 @@ const DirectionNavigation = ({setViewport, viewport, direction, setDirection}) =
 
         const geometry_string = route.overview_polyline.points;
         const geoJSON = polyline.toGeoJSON(geometry_string);
-        console.log(geoJSON);
         setDirection(geoJSON);
     }
 
@@ -405,7 +488,6 @@ const DirectionNavigation = ({setViewport, viewport, direction, setDirection}) =
                 margin: 0, marginBottom: "26px", textTransform: "uppercase", fontWeight: "bold",
             }}
             level={5}>Chỉ đường</Typography.Title>
-
         <Form
             style={{
                 width: "100%",
@@ -474,109 +556,54 @@ const DirectionNavigation = ({setViewport, viewport, direction, setDirection}) =
 
 }
 
-DirectionNavigation.propTypes = {
-    setViewport: PropTypes.func.isRequired, viewport: PropTypes.object.isRequired,
-    setDirection: PropTypes.func.isRequired, direction: PropTypes.object.isRequired,
-};
 
 
-//
-// <div style={{
-//     width: '100%',
-//     height: "100vh",
-// }
-// }>
-//     <AutoComplete
-//         style={{width: "100%", marginBottom: 10}}
-//         options={optionsStart}
-//         onSelect={(value, option) => handleStartSelect(option.place_id)}
-//         onSearch={handleSearchStart}
-//         placeholder="Enter start location"
-//     />
-//     <AutoComplete
-//         style={{width: "100%", marginBottom: 10}}
-//         options={optionsEnd}
-//         onSelect={(value, option) => handleEndSelect(option.place_id)}
-//         onSearch={handleSearchEnd}
-//         placeholder="Enter end location"
-//     />
-//     <Button type="primary" onClick={onSearch}>Get Directions</Button>
-// </div>
-//
-// <div style={{
-//     margin: '24px 16px',
-//     padding: 24,
-//     width: "calc(100% - 300px)",
-//     background: '#ccc',
-// }}>
-//
-//
-//     {/*<AutoComplete*/}
-//     {/*    style={{ width: 300, marginBottom: 10 }}*/}
-//     {/*    options={optionsStart}*/}
-//     {/*    onSelect={(value , option) => handleStartSelect(option.place_id)}*/}
-//     {/*    onSearch={handleSearchStart}*/}
-//     {/*    placeholder="Enter start location"*/}
-//     {/*/>*/}
-//     {/*<AutoComplete*/}
-//     {/*    style={{ width: 300, marginBottom: 10 }}*/}
-//     {/*    options={optionsEnd}*/}
-//     {/*    onSelect={(value , option) => handleEndSelect(option.place_id)}*/}
-//     {/*    onSearch={handleSearchEnd}*/}
-//     {/*    placeholder="Enter end location"*/}
-//     {/*/>*/}
-//     {/*<Button type="primary" onClick={onSearch}>Get Directions</Button>*/}
-//     <ReactMapGL
-//         style={{
-//             position: "absolute",
-//
-//         }}
-//         width="calc(100% - 80px)"
-//         height="calc(100vh - 64px)"
-//
-//         mapStyle="https://tiles.goong.io/assets/goong_map_web.json"
-//         goongApiAccessToken={ACCESS_TOKEN}
-//         {...viewport}
-//         onViewportChange={setViewport}
-//     >
-//         {/*<Pins data={CITIES} onClick={setPopupInfo} />*/}
-//         {/*{popupInfo && (*/}
-//         {/*    <Popup*/}
-//         {/*        tipSize={5}*/}
-//         {/*        anchor="top"*/}
-//         {/*        longitude={popupInfo.longitude}*/}
-//         {/*        latitude={popupInfo.latitude}*/}
-//         {/*        closeOnClick={false}*/}
-//         {/*        onClose={setPopupInfo}*/}
-//         {/*    >*/}
-//         {/*        <CameraInfo info={popupInfo} />*/}
-//         {/*    </Popup>*/}
-//         {/*)}*/}
-//         {/*/!*<Source id="my-data" type="geojson" data={geojson}>*!/*/}
-//         {/*/!*    <Layer {...layerStyle} />*!/*/}
-//         {/*/!*</Source>*!/*/}
-//         {/*{direction && (*/}
-//         {/*    <Source id="route" type="geojson" data={direction}>*/}
-//         {/*        <Layer*/}
-//         {/*            id="route"*/}
-//         {/*            type="line"*/}
-//         {/*            layout={{*/}
-//         {/*                'line-join': 'round',*/}
-//         {/*                'line-cap': 'round'*/}
-//         {/*            }}*/}
-//         {/*            paint={{*/}
-//         {/*                'line-color': '#888',*/}
-//         {/*                'line-width': 8*/}
-//         {/*            }}*/}
-//         {/*        />*/}
-//         {/*    </Source>*/}
-//         {/*)}*/}
-//
-//         {/*
-//                     TODO: Add GeolocateControl, FullscreenControl, NavigationControl, ScaleControl
-//                 */}
-//         <GeolocateControl style={geolocateStyle}/>
-//         <FullscreenControl style={fullscreenControlStyle}/>
-//         <NavigationControl style={navStyle}/>
-//         {/*<ScaleControl style={scaleControlStyle} />*/}
-//     </ReactMapGL>
+const DataTaiNan = [
+    {
+        where :"đường Nguyễn Duy Trinh",
+        time : "13-11-2023"
+    },
+    {
+        where : "đường Nguyễn Văn Tăng",
+        time : "12-11-2023"
+    }
+]
+
+const AlertDiv = () => {
+
+   
+
+
+    return (<div
+        style={{
+            backgroundColor: "white", padding: "16px", width: "350px",
+        }}
+    >
+        <Typography.Title
+            style={{
+                margin: 0, marginBottom: "26px", textTransform: "uppercase", fontWeight: "bold",
+            }}
+            level={5}>Tai Nạn</Typography.Title>
+        
+        <div>
+            <List
+            dataSource={DataTaiNan}
+                renderItem={item  => {
+
+                    return (
+                        <List.Item>
+                            <div style={{display:"flex",flexDirection:"column",width:"100%"}}>
+                                <div style={{fontSize:"19px"}}><AlertFilled/> Tai Nạn Giao Thông </div>
+                                <div>{item.where}</div>
+                                <div>{item.time}</div>
+                            </div>
+                        </List.Item>
+                    )
+                }}
+            
+            />
+                
+        </div>
+    </div>)
+
+}

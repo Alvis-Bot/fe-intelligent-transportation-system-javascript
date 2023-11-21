@@ -14,6 +14,7 @@ const CameraInfo = ({info}) => {
     }
 
     function DrawData (datax) {
+
         const img = new Image()
         img.src = "data:image/png;base64,"+datax.img
         const ctx = canvas.current.getContext("2d");
@@ -21,14 +22,27 @@ const CameraInfo = ({info}) => {
         ctx.strokeStyle = "#00FF00";
         ctx.lineWidth = 3;
         ctx.font = "18px serif";
+        const arr = ['car','bus','motorbike','truck','bicycle',"motorcycle"];
+        //const arr= []
         datax.box.forEach(([x1, y1, x2, y2, label,option]) => {
             if(label === "person")
             {
                 return
             }
-            ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
-            ctx.fillStyle = "#00ff00";
+            if(arr.includes(label))
+            {
+                ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
+                ctx.fillStyle = "#00ff00";
+                console.log(label)
+            }
+            
+            // if(!arr.includes(label))
+            // {
+            //     arr.push(label)
+            // }
+            
         });
+        
     }
 
     useEffect(() => {
@@ -49,6 +63,11 @@ const CameraInfo = ({info}) => {
                 <strong>{info?.name}</strong>
             </div>
             <canvas ref={canvas} width={518} height={294}> </canvas>
+            <div>
+                Tình trạng giao thông : Thông thoáng
+                <br/>
+                Các loại phương tiện Thường hoạt động : Xe máy, ô tô con , xe tải
+            </div>
         </div>
     );
 }
